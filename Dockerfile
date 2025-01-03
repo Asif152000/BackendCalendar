@@ -13,8 +13,14 @@ RUN dotnet publish -c Release -o /app/out
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
 
+# Install any required runtime dependencies (optional)
+RUN apt-get update && apt-get install -y libicu libssl-dev
+
 # Copy the published application from the build stage
 COPY --from=build /app/out .
 
+# Expose the application port (if applicable)
+EXPOSE 5000
+
 # Set the entry point to the app
-ENTRYPOINT ["dotnet", "YourAppName.dll"]
+ENTRYPOINT ["dotnet", "Calendar.dll"]
