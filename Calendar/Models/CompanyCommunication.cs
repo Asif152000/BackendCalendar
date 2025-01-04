@@ -12,15 +12,19 @@ namespace Calendar.Models
         [Required]
         public Guid CompanyId { get; set; }
 
-        public CompanyManagement Company { get; set; }
+        // public CompanyManagement Company { get; set; }
+        public CompanyManagement? Company { get; set; }
 
-       
+
+
         [Required]
         public List<Guid> CommunicationIds { get; set; } = new List<Guid>();
         public DateTime ScheduledDate { get; set; }
         public bool Status { get; set; }
         public DateTime UpdatedDate { get; set; }
-        public string Description { get; set; }
+        //public string Description { get; set; }
+        public string Description { get; set; } = string.Empty;
+
 
     }
 }

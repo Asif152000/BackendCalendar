@@ -39,7 +39,9 @@ namespace AstroAPI.Controllers
         public async Task<IActionResult> Register([FromBody] UserViewModel model)
         {
             // Check if the user already exists
-            var userExists = await _userManager.FindByEmailAsync(model.Email);
+            // var userExists = await _userManager.FindByEmailAsync(model.Email);
+            var userExists = await _userManager.FindByEmailAsync(model.Email!);
+
             if (userExists != null)
                 return Ok(new { StatusCode = HttpStatusCode.InternalServerError, Data = "Username already exists!" });
 
@@ -54,7 +56,9 @@ namespace AstroAPI.Controllers
             };
 
 
-            var result = await _userManager.CreateAsync(user, model.Password);
+            //var result = await _userManager.CreateAsync(user, model.Password);
+            var result = await _userManager.CreateAsync(user ?? throw new ArgumentNullException(nameof(user)), model.Password ?? throw new ArgumentNullException(nameof(model.Password)));
+
 
             if (!result.Succeeded)
                 return Ok(new { StatusCode = HttpStatusCode.InternalServerError, Data = "User creation failed! Please check user details and try again." });
@@ -78,13 +82,16 @@ namespace AstroAPI.Controllers
         [Route("login")]
         public async Task<IActionResult> Login([FromForm] UserViewModel model)
         {
-            var user = await _userManager.FindByEmailAsync(model.Email);
+            //var user = await _userManager.FindByEmailAsync(model.Email);
+            var user = await _userManager.FindByEmailAsync(model.Email ?? throw new ArgumentNullException(nameof(model.Email)));
 
             if (user != null)
             {
-                if (await _userManager.CheckPasswordAsync(user, model.Password))
+                //if (await _userManager.CheckPasswordAsync(user, model.Password))
+                if (await _userManager.CheckPasswordAsync(user, model.Password ?? throw new ArgumentNullException(nameof(model.Password))))
+
                 {
-                  
+
                     var roles = await _userManager.GetRolesAsync(user);
 
                     var roleName = roles.FirstOrDefault(); 
@@ -126,7 +133,10 @@ namespace AstroAPI.Controllers
         // Helper to generate JWT token
         private JwtSecurityToken GetToken(List<Claim> authClaims)
         {
-            var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]));
+            //var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]));
+            var secretKey = _configuration["JWT:Secret"] ?? throw new ArgumentNullException("JWT:Secret configuration is missing.");
+            var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
+
             var token = new JwtSecurityToken(
                 issuer: _configuration["JWT:ValidIssuer"],
                 audience: _configuration["JWT:ValidAudience"],

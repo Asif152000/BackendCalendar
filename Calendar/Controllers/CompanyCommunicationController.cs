@@ -41,31 +41,58 @@ namespace Calendar.Controllers
                 var communicationManagements = await _context.CommunicationManagements
                     .ToListAsync();
 
+                //var result = companyCommunications
+                //    .GroupBy(cc => new { cc.CompanyId, cc.Company.CompanyName })
+                //    .Select(group => new
+                //    {
+                //        CompanyId = group.Key.CompanyId,
+                //        CompanyName = group.Key.CompanyName,
+                //        Communications = group
+                //            .SelectMany(cc => cc.CommunicationIds
+                //                .Select(communicationId => communicationManagements
+                //                    .Where(c => c.CommunicationId == communicationId)
+                //                    .Select(c => new
+                //                    {
+                //                        CompanyCommunicationId = cc.CompanyCommunicationId,
+                //                        CommunicationId=c.CommunicationId,
+                //                        CommunicationName = c.CommunicationName,
+                //                        ScheduledDate = cc.ScheduledDate,
+                //                        UpdatedDate = cc.UpdatedDate,
+                //                        Status = cc.Status,
+                //                        Description=cc.Description,
+                //                    })
+                //                    .FirstOrDefault()))
+                //             //.OrderBy(c => c.ScheduledDate)
+                //             .OrderBy(c => c?.ScheduledDate ?? DateTime.MaxValue)
+                //            .ToList()
+                //    })
+                //    .ToList();
                 var result = companyCommunications
-                    .GroupBy(cc => new { cc.CompanyId, cc.Company.CompanyName })
-                    .Select(group => new
+    .GroupBy(cc => new { cc.CompanyId, CompanyName = cc.Company?.CompanyName ?? "Unknown" })
+    .Select(group => new
+    {
+        CompanyId = group.Key.CompanyId,
+        CompanyName = group.Key.CompanyName,
+        Communications = group
+            .SelectMany(cc => cc.CommunicationIds
+                .Select(communicationId => communicationManagements
+                    .Where(c => c.CommunicationId == communicationId)
+                    .Select(c => new
                     {
-                        CompanyId = group.Key.CompanyId,
-                        CompanyName = group.Key.CompanyName,
-                        Communications = group
-                            .SelectMany(cc => cc.CommunicationIds
-                                .Select(communicationId => communicationManagements
-                                    .Where(c => c.CommunicationId == communicationId)
-                                    .Select(c => new
-                                    {
-                                        CompanyCommunicationId = cc.CompanyCommunicationId,
-                                        CommunicationId=c.CommunicationId,
-                                        CommunicationName = c.CommunicationName,
-                                        ScheduledDate = cc.ScheduledDate,
-                                        UpdatedDate = cc.UpdatedDate,
-                                        Status = cc.Status,
-                                        Description=cc.Description,
-                                    })
-                                    .FirstOrDefault()))
-                            .OrderBy(c => c.ScheduledDate)
-                            .ToList()
+                        CompanyCommunicationId = cc.CompanyCommunicationId,
+                        CommunicationId = c.CommunicationId,
+                        CommunicationName = c.CommunicationName,
+                        ScheduledDate = cc.ScheduledDate,
+                        UpdatedDate = cc.UpdatedDate,
+                        Status = cc.Status,
+                        Description = cc.Description,
                     })
-                    .ToList();
+                    .FirstOrDefault()))
+            .OrderBy(c => c?.ScheduledDate ?? DateTime.MaxValue) // Handle null ScheduledDate
+            .ToList()
+    })
+    .ToList();
+
 
                 return Ok(new { StatusCode = HttpStatusCode.OK, Data = result });
             }
@@ -94,8 +121,17 @@ namespace Calendar.Controllers
         {
             try
             {
-                var payload = JsonConvert.DeserializeObject<UpdateStatusRequest>(request.ToString());
-                var selectedCompanies = payload.SelectedCompanies;  
+                //var payload = JsonConvert.DeserializeObject<UpdateStatusRequest>(request.ToString());
+                var payload = JsonConvert.DeserializeObject<UpdateStatusRequest>(request?.ToString() ?? string.Empty);
+
+                //var selectedCompanies = payload.SelectedCompanies;  
+                if (payload == null)
+                {
+                    throw new InvalidOperationException("Payload is null.");
+                }
+
+                var selectedCompanies = payload.SelectedCompanies;
+
                 var selectedCommunication = payload.SelectedCommunication;  
                 var selectedDate = payload.SelectedDate;  
                 var notes = payload.Notes;  
